@@ -1,20 +1,13 @@
-
-   import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Collections;
 
 
 
 
 public class BoundStackTest {
 
-       
-
-public static final int MAX_GAMES = 100;
-
-
-    private static int passed = 0;
+       private static int passed = 0;
     private static int failed = 0;
 
    
@@ -41,10 +34,11 @@ public static final int MAX_GAMES = 100;
         System.out.println("=== BoundedStack Test Suite ===\n");
 
         testCreators();
-        testpush();
-        testpop();
+        testPush();
+        testPop();
         testObservers();
         testProducer();
+        testExposure();
 
         System.out.println("\n=== Summary ===");
         System.out.println("Passed: " + passed);
@@ -67,20 +61,22 @@ public static final int MAX_GAMES = 100;
         check("new() -> size 0", empty.size() == 0);;
         check("new() -> contains nothing", empty.isEmpty());
 
-        BoundedStack p = new BoundedStack(Arrays.asList("A", "B", "C"));
+       BoundedStack p = new BoundedStack(Arrays.asList("A", "B", "C"), 100);
         check("new(list) -> size 3", p.size() == 3);
-        check("new(list) -> contains B", p.peek("B"));
+       check("new(list) -> top is C", p.peek().equals("C"));
+         check("new(list) -> preserves order",
+               p.games().equals(Arrays.asList("A", "B", "C")));
        
             
 
-        // boundary: list ว่างคือขอบล่างที่ถูกต้อง
-       BoundedStack fromEmpty = new BoundedStack(new ArrayList<String>());
+       
+       BoundedStack fromEmpty = new BoundedStack(new ArrayList<String>(),100);
         check("new(empty list) -> empty", fromEmpty.size() == 0);
 
-        // input ที่ผิดเงื่อนไขต้องโยน exception ไม่ใช่ปล่อยผ่าน
+      
         boolean threwDup = false;
         try {
-            new BoundedStack(Arrays.asList("A", "A"));
+            new BoundedStack(Arrays.asList("A", "A"),100);
         } catch (IllegalArgumentException e) {
             threwDup = true;
         }
@@ -88,7 +84,7 @@ public static final int MAX_GAMES = 100;
 
         boolean threwNull = false;
         try {
-            new BoundedStack(Arrays.asList("A", null));
+            new BoundedStack(Arrays.asList("A", null), 100);
         } catch (IllegalArgumentException e) {
             threwNull = true;
         }
@@ -96,134 +92,134 @@ public static final int MAX_GAMES = 100;
 
         boolean threwNullList = false;
         try {
-            new BoundedStack(null);
+           new BoundedStack(null, 100);
         } catch (IllegalArgumentException e) {
             threwNullList = true;
         }
         check("new(null) -> throws IllegalArgumentException", threwNullList);
     }
 
-    // --- Mutator: add ต้องรักษาลำดับและกันเพลงซ้ำ ---
-    private static void testpush() {
-        System.out.println("\n-- Add --");
+   private static void testPush() {
+    System.out.println("\n-- Push --");
 
-        BoundedStack s = new BoundedStack(100);
-        check("add(A) -> returns true", s.push("A"));
-        check("add(A) -> size 1", s.size() == 1);
-        check("add(A) -> found by contains", s.peek("A"));
+ 
+    BoundedStack s = new BoundedStack(4);
+    s.push("A");
 
-        s.push("B");
-        s.push("C");
-        check("add preserves insertion order",
-                s.games().equals(Arrays.asList("A", "B", "C")));
+    check("push A -> top is A", s.peek().equals("A"));
+    check("push A -> size is 1", s.size() == 1);
 
-        // เพลงซ้ำไม่ใช่ error — คืน false เฉย ๆ
-        check("add duplicate -> returns false", !s.push("A"));
-        check("failed add leaves size unchanged", s.size() == 3);
-
-        // input ที่ผิดเงื่อนไขต้องโยน exception
-        boolean threwEmpty = false;
-        try {
-            s.push("");
-        } catch (IllegalArgumentException e) {
-            threwEmpty = true;
-        }
-        check("add(empty string) -> throws IllegalArgumentException", threwEmpty);
-
-        boolean threwNull = false;
-        try {
-            s.push(null);
-        } catch (IllegalArgumentException e) {
-            threwNull = true;
-        }
-        check("add(null) -> throws IllegalArgumentException", threwNull);
-
-        check("failed adds leave playlist unchanged", s.size() == 3);
-
-        // boundary: เติมจนเต็มพอดีแล้วเติมเพิ่ม
-        BoundedStack full = new BoundedStack(100);
-        for (int i = 0; i < BoundedStack.MAX_GAMES; i++) {
-            full.push("song" + i);
-        }
-        check("can fill up to MAX_GAMES", full.size() == BoundedStack.MAX_GAMES);
-        check("add when full -> returns false", !full.push("one more"));
-        check("full playlist stays at MAX_GAMES",
-                full.size() == BoundedStack.MAX_GAMES);
+    boolean threwEmpty = false;
+    try {
+        new BoundedStack(4).push("");
+    } catch (IllegalArgumentException e) {
+        threwEmpty = true;
     }
-
-    // --- Mutator: remove ทั้งกรณีพบและไม่พบ ---
-    private static void testpop() {
-        System.out.println("\n-- Remove --");
-
-        BoundedStack s = new BoundedStack(Arrays.asList("A", "B", "C"));
-        check("remove(B) -> returns true", s.pop("B"));
-        check("remove -> size decreases", s.size() == 2);
-        check("remove -> song is gone", !s.peek("B"));
-        check("remove keeps the others in order",
-                s.games().equals(Arrays.asList("A", "C")));
-
-        // ลบเพลงที่ไม่มีไม่ใช่ error — คืน false เฉย ๆ
-        check("remove missing song -> returns false", !s.pop("nope"));
-        check("failed remove leaves size unchanged", s.size() == 2);
-
-        // boundary: ลบจนหมด
-        s.pop("A");
-        s.pop("C");
-        check("remove all -> empty", s.size() == 0);
-        check("remove on empty playlist -> returns false", !s.pop("A"));
+    check("push empty string throws", threwEmpty);
+    
+    boolean threwNull = false;
+    try {
+        new BoundedStack(3).push(null);
+    } catch (IllegalArgumentException e) {
+        threwNull = true;
     }
+    check("push null throws", threwNull);
 
-    // --- Observer ต้องไม่มี side effect ---
+    boolean threwDup = false;
+    try {
+        BoundedStack b = new BoundedStack(List.of("A"), 3);
+        b.push("A");
+    } catch (IllegalStateException e) {
+        threwDup = true;
+    }
+    check("push duplicate throws", threwDup);
+
+    boolean threwFull = false;
+    try {
+        BoundedStack full = new BoundedStack(List.of("A", "B"), 2);
+        full.push("C");
+    } catch (IllegalStateException e) {
+        threwFull = true;
+    }
+    check("push when full throws", threwFull);
+}
+
+  
+    private static void testPop() {
+
+    BoundedStack s = new BoundedStack(Arrays.asList("A", "B", "C"), 3);
+
+    check("pop returns top game",
+            s.pop().equals("C"));
+
+    check("pop decreases size",
+            s.size() == 2);
+
+    boolean threwEmpty = false;
+
+    try {
+        BoundedStack empty = new BoundedStack(3);
+        empty.pop();
+    } catch (IllegalStateException e) {threwEmpty = true; }
+
+    check("pop empty stack throws",  threwEmpty);
+
+    BoundedStack order = new BoundedStack(3);
+
+    order.push("A");
+    order.push("B");
+
+    check("pop follows LIFO",
+            order.pop().equals("B"));
+}
+   
     private static void testObservers() {
         System.out.println("\n-- Observers --");
 
-        BoundedStack s = new BoundedStack(Arrays.asList("A", "B"));
+       BoundedStack s = new BoundedStack(Arrays.asList("A", "B"), 100);
         check("size reports 2", s.size() == 2);
-        check("contains finds an existing song", s.peek("A"));
-        check("contains rejects a missing song", !s.peek("Z"));
+       check("peek returns top game", s.peek().equals("B"));
         check("songs returns the full list in order",
                 s.games().equals(Arrays.asList("A", "B")));
 
         int before = s.size();
         s.size();
-        s.peek("A");
+        s.peek();
         s.games();
         check("observers have no side effects", s.size() == before);
     }
 
-    // --- Producer ต้องคืนตัวใหม่ ไม่แก้ตัวเดิม ---
+
     private static void testProducer() {
         System.out.println("\n-- Producer (shuffled) --");
 
-        BoundedStack original = new BoundedStack(Arrays.asList("A", "B", "C", "D"));
-       BoundedStack shuffled = original.shuffled();
+        BoundedStack original = new BoundedStack(Arrays.asList("A", "B", "C", "D"),100);
+      BoundedStack copy = original.copy();
 
-        check("shuffled has the same size", shuffled.size() == original.size());
+        check("copy has the same size", copy.size() == original.size());
 
         List<String> a = new ArrayList<String>(original.games());
-        List<String> b = new ArrayList<String>(shuffled.games());
-        Collections.sort(a);
-        Collections.sort(b);
-        check("shuffled contains exactly the same songs", a.equals(b));
+        List<String> b = new ArrayList<String>(copy.games());
+        check("copy exactly the same game", a.equals(b));
 
-        check("shuffled does not mutate the original",
+        check("copy not mutate the original",
                 original.games().equals(Arrays.asList("A", "B", "C", "D")));
 
-        // mutate ตัวใหม่ต้องไม่กระทบตัวเดิม
-        shuffled.push("E");
-        check("mutating the result does not affect the original",
+       
+        copy.push("E");
+        check("changing copy does not affect original",
                 original.size() == 4);
 
-        // boundary: shuffle เพลย์ลิสต์ว่างต้องไม่พัง
-        BoundedStack emptyShuffled = new BoundedStack(100).shuffled();
-        check("shuffling an empty playlist is safe", emptyShuffled.size() == 0);
+       
+        BoundedStack emptyShuffled = new BoundedStack(100).copy();
+        check("copy empty stack is safe", emptyShuffled.size() == 0);
     }
 
    
     private static void testExposure() {
         System.out.println("\n-- Representation Exposure --");
 
-        // ขาออก: แก้ list ที่ได้จาก songs() ต้องไม่กระทบ rep
+      
        BoundedStack s = new BoundedStack(100);
         s.push("A");
 
@@ -235,15 +231,13 @@ public static final int MAX_GAMES = 100;
         got = s.games();
         got.add("injected");
         check("adding to result of songs() does not affect playlist",
-                s.size() == 1 && !s.peek("injected"));
-
-        // สองครั้งต้องเป็นคนละ object
+               s.size() == 1 && !s.games().contains("injected"));
+     
         check("songs() returns a fresh list each call",
                 s.games() != s.games());
-
-        // ขาเข้า: แก้ list ที่ส่งให้ constructor ต้องไม่กระทบ rep
+    
         List<String> input = new ArrayList<String>(Arrays.asList("A", "B"));
-        BoundedStack p = new BoundedStack(input);
+        BoundedStack p = new BoundedStack(input,100);
 
         input.clear();
         check("clearing constructor argument does not affect playlist",
@@ -251,6 +245,6 @@ public static final int MAX_GAMES = 100;
 
         input.add("injected");
         check("adding to constructor argument does not affect playlist",
-                !p.peek("injected"));
+               !p.games().contains("injected"));
     }
 }
