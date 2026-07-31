@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -15,82 +14,84 @@ public class BoundedStack {
     private final List<String> games;
     private final int capacity;
 
-    //AF(games, capacity)
+    //AF(games, capacity) = ลำดับจากบนลงล่าง (games.get(size-1)) , (games.get(size-2)) , ... , (games.get(size-100)) 
+    // โดยตัวแรกของลำดับคือ...ของ Strack และตัวสุดท้าย (games.get(size-100)) คือ ... ของ Strack capacity คือ ...
     //RI
     // -game ไม่เป็น null
     // -ไม่มีสมาชิกเป็น null
     // -game ไม่มีสตริงว่าง
     // -ชื่อเกมไม่ซ้ำกัน
-    // -ไม่เกิน MAX_GAMES (100) เกม
+    // -ไม่เกิน capacity (100) เกม
 
     private void checkRep() {
 
-        assert games != null;
-        assert games.size() <= MAX_GAMES;
+        assert games != null : "game not null";
         assert games.size() <= capacity;
         assert capacity >= 0 && capacity <= MAX_GAMES;
 
         Set<String> seen = new HashSet<>();
         for (String s : games) {
             assert s != null;
-            assert !s.isEmpty();
+            assert !(s.isEmpty());
             assert seen.add(s) : "ชื่อเกมซ้ำ: " + s;
         }
     }
+    
+    /**
+     * 
+     * @param capacity จำนวนที่ชื่อเกมที่เก็บได้ (MAX_GAMES = 100)
+     */
+    public BoundedStack(int capacity){
+        if (capacity < 0 || capacity > MAX_GAMES) throw new IllegalArgumentException();
+        this.games = new ArrayList<>();
+        this.capacity = capacity;
+    }
+
 
     /**
      * 
      * @param initial รายชื่อเกมเริ่มต้น ต้องไม่ซ้ำและไม่เกิน MAX_GAMES
      * @throws IllegalArumentException ถ้า initial ผิดเงื่อนไข
      */
-    public BoundedStack(List<String> initial) {
+    public BoundedStack(List<String> initial , int capacity) {
 
         if(initial==null) throw new IllegalArgumentException();
         if(initial.size()>MAX_GAMES) throw new IllegalArgumentException();
         Set<String> seen = new HashSet<>();
         for(String s : initial){
-            if(s==null || s=="") throw new IllegalArgumentException();
+            if(s==null || s.isEmpty()) throw new IllegalArgumentException();
             if(!seen.add(s)) throw new IllegalArgumentException();
     }
         this.games = new ArrayList<>(initial); 
-        this.capacity = initial.size();  
+        if (capacity < initial.size() || capacity > MAX_GAMES) throw new IllegalArgumentException();
+    this.capacity = capacity;  
         checkRep();
 
     }
+    
     /**
      * 
-     * @param capacity จำนวนที่ชื่อเกมที่เก็บได้ (MAX_GAMES = 100)
+     * @param game ชื่อเกม ต้องไม่เป็น null และไม่เป็นสตริงว่าง  
+     * @throws IIlegalArguments ถ้า game เป็น null หรือสตริงว่าง , llegalStateException ถ้า games = capacity
      */
-    public BoundedStack(int capacity){
-        this.games = new ArrayList<>();
-        this.capacity = capacity;
-    }
-
-    /**
-     * 
-     * @param game ชื่อเกม ต้องไม่เป็น null และไม่เป็นสตริงว่าง
-     * @return true ถ้าเพิ่มสำเร็จ , flase ถ้ามีเพลงอยู่แล้วหรือเต็มแล้ว
-     * @throws IIlegaArumentException ถ้า game เป็น null หรือสตริงว่าง
-     */
-    public boolean push(String game){
-        if (game == null || game==" ") throw new IllegalArgumentException();
-        if (games.contains(game) || games.size() == capacity)
-            return false;
+    public void push(String game){
+        if (game == null || game.isEmpty()) throw new IllegalArgumentException(); 
+        if (games.contains(game) || games.size() == capacity) throw new IllegalStateException(); 
         games.add(game);
         checkRep();
-        return true;
     }
 
     /**
      * 
-     * @param game ชื่อเกมที่ต้องการลบ
-     * @return true ถ้าลบสำเร็จ , flase ถ้าไม่พบเกมนี้
+     * @return ลบตัวบนสุด และคืนค่าตัวบนสุดอันใหม่     
+     * @throws Illegalexeption ถ้า games ว่าง
      */
-    public boolean pop(String game){
-        if (!games.contains(game)) return false;
-        games.remove(game);
-        checkRep();
-        return true;
+    public String pop(){
+        if (games.isEmpty()) throw new IllegalStateException();
+    String top = games.remove(games.size() - 1);
+    checkRep();
+    return top;
+        
     }
 
     /**
@@ -102,12 +103,14 @@ public class BoundedStack {
     }
 
     /**
+     * ดูเกมที่อยู่บนสุดของ stack โดยไม่ลบออก
+     * @return ชื่อเกมที่อยู่บนสุด
+     * @throws IllegalStateException ถ้า stack ว่าง
      * 
-     * @param game ตรวจว่ามีเกมนี้อยู่หรือไม่
-     * @return คืนค่าเกมที่มี
      */
-    public boolean peek(String game){
-        return games.contains(game);
+    public String peek(){
+          if (games.isEmpty()) throw new IllegalStateException("stack ว่าง ไม่สามารถ peek ได้");
+    return games.get(games.size() - 1);
     }
 
     public List<String> games() {
@@ -118,15 +121,17 @@ public class BoundedStack {
 
     /**
      * 
-     * @return boundedStrack ที่สลับลำดับแล้ว
+     * @return 
      */
-    public BoundedStack shuffled(){
-        List<String> copy = new ArrayList<>(games);
-        Collections.shuffle(copy);
-        BoundedStack result = new BoundedStack(this.capacity);
-        for (String g : copy) result.push(g);
-        return result;
+    public BoundedStack copy() {
+    BoundedStack result = new BoundedStack(this.capacity);
+
+    for (String game : games) {
+        result.push(game);
     }
+
+    return result;
+}
 
     /**
      * 
