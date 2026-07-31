@@ -24,11 +24,11 @@ public class BoundStackTest {
     public static void main(String[] args) {
         
            
-        boolean assertsOn = false;
-        assert assertsOn = true;
-        if (!assertsOn) {
+        boolean assertson = false;
+        assert assertson = true;
+        if (!assertson) {
             System.out.println("WARNING: assertions disabled"
-                    + " - re-run with: java -ea PlaylistTest\n");
+                    + " - re-run with: java -ea BoundedStrackTest\n");
         }
 
         System.out.println("=== BoundedStack Test Suite ===\n");
@@ -74,13 +74,13 @@ public class BoundStackTest {
         check("new(empty list) -> empty", fromEmpty.size() == 0);
 
       
-        boolean threwDup = false;
+        boolean threwup = false;
         try {
             new BoundedStack(Arrays.asList("A", "A"),100);
         } catch (IllegalArgumentException e) {
-            threwDup = true;
+            threwup = true;
         }
-        check("new(duplicates) -> throws IllegalArgumentException", threwDup);
+        check("new(duplicates) -> throws IllegalArgumentException", threwup);
 
         boolean threwNull = false;
         try {
@@ -125,14 +125,14 @@ public class BoundStackTest {
     }
     check("push null throws", threwNull);
 
-    boolean threwDup = false;
+    boolean threwup = false;
     try {
         BoundedStack b = new BoundedStack(List.of("A"), 3);
         b.push("A");
     } catch (IllegalStateException e) {
-        threwDup = true;
+        threwup = true;
     }
-    check("push duplicate throws", threwDup);
+    check("push duplicate throws", threwup);
 
     boolean threwFull = false;
     try {
@@ -179,7 +179,7 @@ public class BoundStackTest {
        BoundedStack s = new BoundedStack(Arrays.asList("A", "B"), 100);
         check("size reports 2", s.size() == 2);
        check("peek returns top game", s.peek().equals("B"));
-        check("songs returns the full list in order",
+        check("games returns the full list in order",
                 s.games().equals(Arrays.asList("A", "B")));
 
         int before = s.size();
@@ -191,7 +191,7 @@ public class BoundStackTest {
 
 
     private static void testProducer() {
-        System.out.println("\n-- Producer (shuffled) --");
+        System.out.println("\n-- Producer (copy) --");
 
         BoundedStack original = new BoundedStack(Arrays.asList("A", "B", "C", "D"),100);
       BoundedStack copy = original.copy();
@@ -211,8 +211,8 @@ public class BoundStackTest {
                 original.size() == 4);
 
        
-        BoundedStack emptyShuffled = new BoundedStack(100).copy();
-        check("copy empty stack is safe", emptyShuffled.size() == 0);
+        BoundedStack emptycopy= new BoundedStack(100).copy();
+        check("copy empty stack is safe", emptycopy.size() == 0);
     }
 
    
@@ -225,26 +225,27 @@ public class BoundStackTest {
 
         List<String> got = s.games();
         got.clear();
-        check("clearing result of songs() does not affect playlist",
+        check("clearing result of games() does not affect boundedstrack",
                 s.size() == 1);
 
         got = s.games();
         got.add("injected");
-        check("adding to result of songs() does not affect playlist",
+        check("adding to result of games() does not affect boundedstrack",
                s.size() == 1 && !s.games().contains("injected"));
      
-        check("songs() returns a fresh list each call",
+        check("games() returns a fresh list each call",
                 s.games() != s.games());
     
         List<String> input = new ArrayList<String>(Arrays.asList("A", "B"));
         BoundedStack p = new BoundedStack(input,100);
 
         input.clear();
-        check("clearing constructor argument does not affect playlist",
+        check("clearing constructor argument does not affect boundedstrack",
                 p.size() == 2);
 
         input.add("injected");
-        check("adding to constructor argument does not affect playlist",
+        check("adding to constructor argument does not affect boundedstrack",
                !p.games().contains("injected"));
     }
 }
+    

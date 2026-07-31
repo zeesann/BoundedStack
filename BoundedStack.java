@@ -14,8 +14,10 @@ public class BoundedStack {
     private final List<String> games;
     private final int capacity;
 
-    //AF(games, capacity) = ลำดับจากบนลงล่าง (games.get(size-1)) , (games.get(size-2)) , ... , (games.get(size-100)) 
-    // โดยตัวแรกของลำดับคือ...ของ Strack และตัวสุดท้าย (games.get(size-100)) คือ ... ของ Strack capacity คือ ...
+    //AF(games, capacity) =  games แทนลำดับข้อมูลใน Stack โดย games.get(games.size()-1) คือข้อมูลบนสุดของ Stack
+    // games.get(0) คือข้อมูลที่ถูกเพิ่มก่อนสุด , capacity คือจำนวนข้อมูลสูงสุดที่ Stack สามารถเก็บได้
+
+
     //RI
     // -game ไม่เป็น null
     // -ไม่มีสมาชิกเป็น null
@@ -47,7 +49,6 @@ public class BoundedStack {
         this.capacity = capacity;
     }
 
-
     /**
      * 
      * @param initial รายชื่อเกมเริ่มต้น ต้องไม่ซ้ำและไม่เกิน MAX_GAMES
@@ -70,9 +71,11 @@ public class BoundedStack {
     }
     
     /**
-     * 
-     * @param game ชื่อเกม ต้องไม่เป็น null และไม่เป็นสตริงว่าง  
-     * @throws IIlegalArguments ถ้า game เป็น null หรือสตริงว่าง , llegalStateException ถ้า games = capacity
+    * เพิ่มชื่อเกมเข้าไปบนสุดของ Stack
+    *
+    * @param game ชื่อเกมที่ต้องการเพิ่ม ต้องไม่เป็น null และไม่เป็นค่าว่าง
+    * @throws IllegalArgumentException ถ้า game ไม่ถูกต้อง
+    * @throws IllegalStateException ถ้า Stack เต็มหรือมีชื่อเกมซ้ำ
      */
     public void push(String game){
         if (game == null || game.isEmpty()) throw new IllegalArgumentException(); 
@@ -82,15 +85,17 @@ public class BoundedStack {
     }
 
     /**
-     * 
-     * @return ลบตัวบนสุด และคืนค่าตัวบนสุดอันใหม่     
-     * @throws Illegalexeption ถ้า games ว่าง
-     */
+        * ลบและคืนค่าชื่อเกมที่อยู่บนสุดของ Stack
+    *
+    * @return ชื่อเกมที่ถูกนำออก
+    * @throws IllegalStateException ถ้า Stack ว่าง
+    */
     public String pop(){
+
         if (games.isEmpty()) throw new IllegalStateException();
-    String top = games.remove(games.size() - 1);
-    checkRep();
-    return top;
+            String top = games.remove(games.size() - 1);
+        checkRep();
+        return top;
         
     }
 
@@ -103,26 +108,30 @@ public class BoundedStack {
     }
 
     /**
-     * ดูเกมที่อยู่บนสุดของ stack โดยไม่ลบออก
-     * @return ชื่อเกมที่อยู่บนสุด
-     * @throws IllegalStateException ถ้า stack ว่าง
-     * 
-     */
+    * ดูชื่อเกมที่อยู่บนสุดโดยไม่ลบออก
+    *
+     * @return ชื่อเกมบนสุดของ Stack
+    * @throws IllegalStateException ถ้า Stack ว่าง
+    */
     public String peek(){
           if (games.isEmpty()) throw new IllegalStateException("stack ว่าง ไม่สามารถ peek ได้");
     return games.get(games.size() - 1);
     }
 
+    /**
+     * 
+     * @return
+     */
     public List<String> games() {
     return new ArrayList<>(games);
 }
 
 
-
-    /**
-     * 
-     * @return 
-     */
+      /**
+    * สร้างสำเนาใหม่ของ Stack ที่มีข้อมูลเหมือนเดิม
+    *
+    * @return BoundedStack ตัวใหม่
+    */
     public BoundedStack copy() {
     BoundedStack result = new BoundedStack(this.capacity);
 
