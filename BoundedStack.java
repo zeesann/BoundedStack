@@ -110,6 +110,12 @@ public class BoundedStack {
         return games.contains(game);
     }
 
+    public List<String> games() {
+    return new ArrayList<>(games);
+}
+
+
+
     /**
      * 
      * @return boundedStrack ที่สลับลำดับแล้ว
